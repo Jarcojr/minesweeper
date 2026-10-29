@@ -1,13 +1,13 @@
 """
 assets.py -- loads the tile images from the visuals/ folder.
 
-Expected files (all PNG, all the same size as CELL_SIZE in main.py):
+Expected files (all PNG, all the same size as ART_SIZE in main.py):
 
-    visuals/tile_hidden.png     unrevealed tile
-    visuals/tile_0.png          revealed tile with no adjacent mines
-    visuals/tile_1.png ... tile_8.png   revealed tile showing that number
-    visuals/mine.png            mine (shown when the game is lost)
-    visuals/flag.png            flag (drawn on top of a hidden tile)
+    visuals/TileUnknown.png    unrevealed tile
+    visuals/TileEmpty.png      revealed tile with no adjacent mines
+    visuals/Tile1.png ... Tile8.png   revealed tile showing that number
+    visuals/TileMine.png       mine (shown when the game is lost)
+    visuals/TileFlag.png       flag (drawn on top of a hidden tile)
 
 If a file is missing, it is simply skipped and main.py draws a placeholder
 shape instead. To rename a file, change it in IMAGE_FILES below -- nowhere else.
@@ -37,7 +37,7 @@ IMAGE_FILES = {
 }
 
 
-def load_images(cell_size):
+def load_images(art_size):
     """Returns a dictionary {key: PhotoImage} for every image file found.
 
     IMPORTANT: call this AFTER the tk.Tk() window has been created, and keep
@@ -54,9 +54,9 @@ def load_images(cell_size):
             continue
 
         image = tk.PhotoImage(file=path)
-        if image.width() != cell_size or image.height() != cell_size:
+        if image.width() != art_size or image.height() != art_size:
             print(f"WARNING: {filename} is {image.width()}x{image.height()} "
-                  f"but CELL_SIZE is {cell_size}. It will look misaligned.")
+                  f"but ART_SIZE is {art_size}. It will look misaligned.")
         images[key] = image
 
     print(f"Loaded {len(images)} images from {IMAGE_DIR}")

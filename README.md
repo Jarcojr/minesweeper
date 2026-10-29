@@ -2,9 +2,20 @@
 
 Created by: Michael J. | Sharad L. | Sara C.
 
+Things to do:
+    Add TileExploded.png to game
+    update TileFlag to have a sandy background
+    Change smiley face/reset button to something else
+    Add Bombs: and Timer: to top section
+    Test and work on understanding how the game works so we can explain it fully in our presentation
+
 **HOW TO RUN:**
 
-*add this once main.java is built*
+1. Install Python 3 from python.org (check "Add python.exe to PATH" during setup). tkinter is included, so nothing else needs to be installed.
+2. Clone this repo and open the folder in VS Code (File > Open Folder).
+3. Open `main.py` and click the play button, or run `python main.py` in the terminal.
+
+**Controls:** left click reveals a tile, right click flags it, `R` or the center button restarts, and `1` / `2` / `3` switch between beginner, intermediate, and expert.
 
 **Purpose:**
 

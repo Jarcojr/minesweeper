@@ -3,8 +3,7 @@ Charleston Minesweeper -- main.py (Person B: UI + input), tkinter version
 
 Controls:
     Left click   reveal a tile
-    Right click  place/remove a flag (on a Mac trackpad: two-finger click
-                 or Control+click)
+    Right click  place/remove a flag
     Click the center button (or press R) to restart
     Press 1 / 2 / 3 to switch difficulty (beginner / intermediate / expert)
 """
@@ -14,17 +13,21 @@ from board import Board
 from assets import load_images
 
 # ---------- Constants ----------
-CELL_SIZE = 16          # change this to match Person C's image size
+ART_SIZE = 16           # pixel size of the artwork files (16x16)
 HEADER_HEIGHT = 60
 TICK_MS = 200           # how often the timer label refreshes
 
+# rows, cols, mines, scale
+# scale = how many times bigger each art pixel is drawn on screen.
+# On screen, one tile is ART_SIZE * scale pixels wide (16 * 3 = 48, etc.)
+# Use whole numbers only so the pixel art stays sharp.
 DIFFICULTIES = {
-    "beginner":     (9, 9, 10),     # rows, cols, mines
-    "intermediate": (16, 16, 40),
-    "expert":       (16, 30, 99),
+    "beginner":     (9, 9, 10, 3),      # window about 432 x 492
+    "intermediate": (16, 16, 40, 2),    # window about 512 x 572
+    "expert":       (16, 30, 99, 2),    # window about 960 x 572
 }
 
-# Placeholder colors (these go away once the real images are in)
+# Placeholder colors (only used when an image file is missing)
 COLOR_BG = "#1e1e28"
 COLOR_HIDDEN = "#9696a0"
 COLOR_REVEALED = "#e1d7b9"
@@ -49,9 +52,10 @@ class Game:
 
         self.difficulty = "beginner"
 
-        # Load the tile art once. Must happen after the tk.Tk() window exists
-        # and the result must stay stored on self, or the images disappear.
-        self.images = load_images(CELL_SIZE)
+        # Load the original 16x16 art once. Must happen after tk.Tk() exists.
+        # Scaled copies for the current difficulty are made in start_new_game.
+        self.base_images = load_images(ART_SIZE)
+        self.images = {}
 
         # ----- Header: mine counter | restart button | timer -----
         header_font = ("Arial", 22, "bold")
@@ -63,7 +67,6 @@ class Game:
         self.timer_label = tk.Label(self.header, font=header_font, fg=COLOR_TEXT,
                                     bg=COLOR_BG, width=4)
         self.timer_label.pack(side="right", padx=8, pady=8)
-        # Placeholder: later you can use a tk.PhotoImage here instead of text
         self.restart_button = tk.Button(self.header, text=":)", font=header_font,
                                         width=4, command=self.start_new_game)
         self.restart_button.pack(expand=True, pady=8)
@@ -74,13 +77,10 @@ class Game:
 
         # ----- Input bindings -----
         self.canvas.bind("<Button-1>", self.on_left_click)
-        self.canvas.bind("<Button-3>", self.on_right_click)           # Windows/Linux
-        self.canvas.bind("<Button-2>", self.on_right_click)           # Mac right-click
-        self.canvas.bind("<Control-Button-1>", self.on_right_click)   # Mac ctrl+click
+        self.canvas.bind("<Button-3>", self.on_right_click)
         root.bind("<Key>", self.on_key)
 
-        self.cell_font = ("Arial", int(CELL_SIZE * 0.45), "bold")
-        self.big_font = ("Arial", 32, "bold")
+        self.big_font = ("Arial", 28, "bold")
         self.small_font = ("Arial", 13, "bold")
 
         self.start_new_game()
@@ -88,11 +88,20 @@ class Game:
 
     # ---------- Setup ----------
     def start_new_game(self):
-        rows, cols, mines = DIFFICULTIES[self.difficulty]
+        rows, cols, mines, scale = DIFFICULTIES[self.difficulty]
         self.board = Board(rows, cols, mines)
-        self.width = cols * CELL_SIZE
-        self.height = rows * CELL_SIZE
+
+        # Size of one tile on screen, and the whole grid
+        self.cell_size = ART_SIZE * scale
+        self.width = cols * self.cell_size
+        self.height = rows * self.cell_size
         self.canvas.config(width=self.width, height=self.height)
+
+        # Make enlarged copies of every image. zoom(3) turns each pixel into a
+        # 3x3 block. (This is a dictionary comprehension: build a new dict by
+        # looping over the old one.)
+        self.images = {key: image.zoom(scale) for key, image in self.base_images.items()}
+        self.cell_font = ("Arial", int(self.cell_size * 0.45), "bold")
 
         self.start_time = None       # set on the first click
         self.final_seconds = None    # set when the game ends
@@ -122,8 +131,8 @@ class Game:
 
     def cell_from_event(self, event):
         """Convert pixel coordinates to (row, col). Returns None if outside."""
-        row = event.y // CELL_SIZE    # // is integer division, like Java's int / int
-        col = event.x // CELL_SIZE
+        row = event.y // self.cell_size   # // is integer division, like Java's int / int
+        col = event.x // self.cell_size
         if 0 <= row < self.board.rows and 0 <= col < self.board.cols:
             return row, col
         return None
@@ -161,15 +170,15 @@ class Game:
         remaining = self.board.mines - self.board.flags_placed()
         self.mine_label.config(text=f"{remaining:03d}")
         self.timer_label.config(text=f"{min(self.elapsed_seconds(), 999):03d}")
-        face = {"playing": ":)", "won": "B)", "lost": "X("}[self.board.state]
+        face = {"playing": "😬", "won": "😎", "lost": "😵"}[self.board.state]
         self.restart_button.config(text=face)
 
     def draw_grid(self):
         self.canvas.delete("all")   # clear everything, then redraw
         for r in range(self.board.rows):
             for c in range(self.board.cols):
-                x = c * CELL_SIZE
-                y = r * CELL_SIZE
+                x = c * self.cell_size
+                y = r * self.cell_size
                 self.draw_cell(self.board.cells[r][c], x, y)
 
     def draw_cell(self, cell, x, y):
@@ -197,17 +206,17 @@ class Game:
 
     # ---------- Placeholder shapes (used only when an image file is missing) ----------
     def placeholder_hidden(self, x, y):
-        s = CELL_SIZE
+        s = self.cell_size
         self.canvas.create_rectangle(x, y, x + s, y + s,
                                      fill=COLOR_HIDDEN, outline=COLOR_GRID_LINE)
 
     def placeholder_revealed(self, x, y):
-        s = CELL_SIZE
+        s = self.cell_size
         self.canvas.create_rectangle(x, y, x + s, y + s,
                                      fill=COLOR_REVEALED, outline=COLOR_GRID_LINE)
 
     def placeholder_mine(self, x, y):
-        s = CELL_SIZE
+        s = self.cell_size
         pad = s // 4
         self.canvas.create_oval(x + pad, y + pad, x + s - pad, y + s - pad,
                                 fill=COLOR_MINE, outline="")
@@ -215,12 +224,13 @@ class Game:
     def placeholder_number(self, n, x, y):
         self.placeholder_revealed(x, y)
         if n > 0:
-            self.canvas.create_text(x + CELL_SIZE / 2, y + CELL_SIZE / 2,
+            self.canvas.create_text(x + self.cell_size / 2, y + self.cell_size / 2,
                                     text=str(n), font=self.cell_font,
                                     fill=NUMBER_COLORS[n])
 
     def draw_flag(self, x, y):
-        s = CELL_SIZE
+        s = self.cell_size
+        self.placeholder_hidden(x, y)
         self.canvas.create_polygon(x + s * 0.3, y + s * 0.2,
                                    x + s * 0.75, y + s * 0.4,
                                    x + s * 0.3, y + s * 0.6,
