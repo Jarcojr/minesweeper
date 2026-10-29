@@ -70,13 +70,13 @@ class Board:
             candidates = [(r, c) for r in range(self.rows) for c in range(self.cols)
                           if (r, c) != (safe_r, safe_c)]
         
-        target = self.rows * self.cols // 6
+        target = self.rows * self.cols // 6   #num of squares / 6
         best_mines = None
-        best_size = 0
+        best_size = -1
 
-        for _ in range(100):
-            mines = set(random.sample(candidates, self.mines))
-            size = self._opening_size(safe_r, safe_c, mines)
+        for _ in range(30):   #up to 30 attempts - can make higher but will be slower
+            mines = set(random.sample(candidates, self.mines))  #randomly choose mine spots
+            size = self._opening_size(safe_r, safe_c, mines)    #calculate new starting size of board
 
             if size > best_size:
                 best_size = size
@@ -86,8 +86,8 @@ class Board:
                 break
 
         for r, c in best_mines:
-            self.cells[r][c].is_mine = True
-            
+            self.cells[r][c].is_mine = True  #place mines in best position after check
+
         for r in range(self.rows):
             for c in range(self.cols):
                 self.cells[r][c].adjacent_count = sum(
