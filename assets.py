@@ -22,10 +22,10 @@ IMAGE_DIR = os.path.join(BASE_DIR, "visuals")
 
 # key used by main.py  ->  file name in the visuals folder
 IMAGE_FILES = {
-    "hidden": "tile_hidden.png",
+    "hidden": "TileUnknown.png",
     "mine": "mine.png",
     "flag": "flag.png",
-    0: "tile_0.png",
+    0: "TileEmpty.png",
     1: "tile_1.png",
     2: "tile_2.png",
     3: "tile_3.png",
