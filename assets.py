@@ -1,13 +1,13 @@
 """
-assets.py -- loads the tile images from the images/ folder.
+assets.py -- loads the tile images from the visuals/ folder.
 
 Expected files (all PNG, all the same size as CELL_SIZE in main.py):
 
-    images/tile_hidden.png     unrevealed tile
-    images/tile_0.png          revealed tile with no adjacent mines
-    images/tile_1.png ... tile_8.png   revealed tile showing that number
-    images/mine.png            mine (shown when the game is lost)
-    images/flag.png            flag (drawn on top of a hidden tile)
+    visuals/tile_hidden.png     unrevealed tile
+    visuals/tile_0.png          revealed tile with no adjacent mines
+    visuals/tile_1.png ... tile_8.png   revealed tile showing that number
+    visuals/mine.png            mine (shown when the game is lost)
+    visuals/flag.png            flag (drawn on top of a hidden tile)
 
 If a file is missing, it is simply skipped and main.py draws a placeholder
 shape instead. To rename a file, change it in IMAGE_FILES below -- nowhere else.
@@ -18,9 +18,9 @@ import tkinter as tk
 # __file__ is THIS file's location, so the path works on every teammate's
 # computer no matter where they cloned the repo or where VS Code's terminal is.
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMAGE_DIR = os.path.join(BASE_DIR, "images")
+IMAGE_DIR = os.path.join(BASE_DIR, "visuals")
 
-# key used by main.py  ->  file name in the images folder
+# key used by main.py  ->  file name in the visuals folder
 IMAGE_FILES = {
     "hidden": "tile_hidden.png",
     "mine": "mine.png",
