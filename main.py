@@ -14,7 +14,7 @@ from board import Board
 from assets import load_images
 
 # ---------- Constants ----------
-CELL_SIZE = 32          # change this to match Person C's image size
+CELL_SIZE = 16          # change this to match Person C's image size
 HEADER_HEIGHT = 60
 TICK_MS = 200           # how often the timer label refreshes
 
