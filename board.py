@@ -42,6 +42,26 @@ class Board:
                 if 0 <= nr < self.rows and 0 <= nc < self.cols:
                     yield nr, nc
 
+#for first click, counts how many squares should open to prevent unsolvable starts
+    def _opening_size(self, safe_r, safe_c, mine_positions):
+        stack = [(safe_r, safe_c)]
+        seen = set()
+
+        while stack:
+            r, c = stack.pop()
+
+            if (r, c) in seen or (r, c) in mine_positions:
+                continue
+
+            seen.add((r, c))
+            neighbors = list(self._neighbors(r, c))
+
+            if not any(pos in mine_positions for pos in neighbors):
+                stack.extend(neighbors)
+
+        return len(seen)
+
+
     def _place_mines(self, safe_r, safe_c):
         # Keep the first click and its neighbors mine-free
         candidates = [(r, c) for r in range(self.rows) for c in range(self.cols)
@@ -49,8 +69,25 @@ class Board:
         if len(candidates) < self.mines:  # tiny board fallback
             candidates = [(r, c) for r in range(self.rows) for c in range(self.cols)
                           if (r, c) != (safe_r, safe_c)]
-        for r, c in random.sample(candidates, self.mines):
+        
+        target = self.rows * self.cols // 6
+        best_mines = None
+        best_size = 0
+
+        for _ in range(100):
+            mines = set(random.sample(candidates, self.mines))
+            size = self._opening_size(safe_r, safe_c, mines)
+
+            if size > best_size:
+                best_size = size
+                best_mines = mines
+
+            if size >= target:
+                break
+
+        for r, c in best_mines:
             self.cells[r][c].is_mine = True
+            
         for r in range(self.rows):
             for c in range(self.cols):
                 self.cells[r][c].adjacent_count = sum(
