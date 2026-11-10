@@ -1,16 +1,19 @@
 """
-TEMPORARY board.py -- a stand-in so the UI (main.py) can be tested.
-Person A will replace this with the real version. The UI only relies on:
+board.py -- the game logic, no drawing in here. main.py uses:
 
     Board(rows, cols, mines)
     board.rows, board.cols, board.mines
     board.cells[row][col].is_mine / is_revealed / is_flagged / adjacent_count
-    board.reveal(row, col)
+    board.reveal(row, col)    -> list of (row, col, depth)
     board.toggle_flag(row, col)
     board.flags_placed()      -> int
+    board.flag_all_mines()
+    board.exploded            -> (row, col) of the clicked mine, None if no loss
     board.state               -> "playing", "won", or "lost"
 """
+import math
 import random
+from collections import deque
 
 
 class Cell:
@@ -28,6 +31,7 @@ class Board:
         self.mines = mines
         self.cells = [[Cell() for _ in range(cols)] for _ in range(rows)]
         self.state = "playing"
+        self.exploded = None        # which mine got clicked (if we lost)
         self._mines_placed = False
 
     def flags_placed(self):
@@ -95,34 +99,48 @@ class Board:
         self._mines_placed = True
 
     def reveal(self, r, c):
+        # returns a list of (row, col, depth) for every tile that just got revealed
+        # (depth = how many steps away from the click), main.py uses the list for the animation
         if self.state != "playing":
-            return
+            return []
         cell = self.cells[r][c]
         if cell.is_flagged or cell.is_revealed:
-            return
+            return []
         if not self._mines_placed:
             self._place_mines(r, c)
 
         if cell.is_mine:
             self.state = "lost"
-            for row in self.cells:
-                for other in row:
-                    if other.is_mine:
+            self.exploded = (r, c)
+            cell.is_revealed = True
+            revealed = [(r, c, 0)]
+            # show the rest of the mines too (skip the flagged ones)
+            # farther mines get a bigger distance so they show up later
+            for mr in range(self.rows):
+                for mc in range(self.cols):
+                    other = self.cells[mr][mc]
+                    if other.is_mine and not other.is_revealed and not other.is_flagged:
                         other.is_revealed = True
-            return
+                        distance = int(math.hypot(mr - r, mc - c) / 2) + 1
+                        revealed.append((mr, mc, distance))
+            return revealed
 
-        # Flood fill (iterative, using a stack)
-        stack = [(r, c)]
-        while stack:
-            cr, cc = stack.pop()
-            current = self.cells[cr][cc]
-            if current.is_revealed or current.is_flagged:
-                continue
-            current.is_revealed = True
-            if current.adjacent_count == 0:
-                stack.extend(self._neighbors(cr, cc))
+        # flood fill, switched from a stack to a queue so it goes outward in rings
+        cell.is_revealed = True
+        queue = deque([(r, c, 0)])
+        revealed = []
+        while queue:
+            cr, cc, depth = queue.popleft()
+            revealed.append((cr, cc, depth))
+            if self.cells[cr][cc].adjacent_count == 0:
+                for nr, nc in self._neighbors(cr, cc):
+                    neighbor = self.cells[nr][nc]
+                    if not neighbor.is_revealed and not neighbor.is_flagged:
+                        neighbor.is_revealed = True   # mark it now so it only gets added once
+                        queue.append((nr, nc, depth + 1))
 
         self._check_win()
+        return revealed
 
     def toggle_flag(self, r, c):
         if self.state != "playing":
@@ -137,3 +155,10 @@ class Board:
                 if not cell.is_mine and not cell.is_revealed:
                     return
         self.state = "won"
+
+    def flag_all_mines(self):
+        # after a win, flag every mine so the counter ends at 0
+        for row in self.cells:
+            for cell in row:
+                if cell.is_mine:
+                    cell.is_flagged = True
