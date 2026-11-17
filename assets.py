@@ -8,6 +8,10 @@ Expected files (all PNG, all the same size as ART_SIZE in main.py):
     visuals/Tile1.png ... Tile8.png   revealed tile showing that number
     visuals/TileMine.png       mine (shown when the game is lost)
     visuals/TileFlag.png       flag (drawn on top of a hidden tile)
+    visuals/TileExploded.png   the mine you clicked (when you lose)
+    visuals/TileNotMine.png    flag that was on a tile with no mine (when you lose)
+    visuals/FaceChill.png, FaceTense.png, FaceScared.png, FaceDead.png, FaceWin.png
+                               faces for the reset button
 
 If a file is missing, it is simply skipped and main.py draws a placeholder
 shape instead. To rename a file, change it in IMAGE_FILES below -- nowhere else.
@@ -25,6 +29,13 @@ IMAGE_FILES = {
     "hidden": "TileUnknown.png",
     "mine": "TileMine.png",
     "flag": "TileFlag.png",
+    "exploded": "TileExploded.png",
+    "notmine": "TileNotMine.png",
+    "face_chill": "FaceChill.png",
+    "face_tense": "FaceTense.png",
+    "face_scared": "FaceScared.png",
+    "face_dead": "FaceDead.png",
+    "face_win": "FaceWin.png",
     0: "TileEmpty.png",
     1: "Tile1.png",
     2: "Tile2.png",
